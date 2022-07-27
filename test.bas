@@ -1,0 +1,7 @@
+*BOOT 'Retro of the Galaxy E500 Ver
+
+POKE &BFE03, &1A, &FD, &B, &0, &20, &0
+CALL &FFFD8
+PRINT "HELLO WORLD"
+GOTO 10
+
