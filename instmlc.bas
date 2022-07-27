@@ -1,0 +1,69 @@
+*BOOT GOTO *START
+
+*UPPERCASE
+'convert TMP$ to upper case
+TMP2$ = ""
+FOR I=1 TO LEN(TMP$)
+	IF (ASC(MID$(TMP$,I,1))>=97) THEN TMP2$=TMP2$+CHR$(ASC(MID$(TMP$,I,1))-32) ELSE TMP2$=TMP2$+MID$(TMP$,I,1)
+NEXT I
+TMP$ = TMP2$
+RETURN
+
+*CONVHEX
+'convert TMP$ to TMP; TMP$ must be uppercase
+TMP = 0
+J=0
+FOR I = LEN(TMP$) TO 1 STEP -1
+	C$ = MID$(TMP$,I,1)
+	V = ASC(C$)
+	if V>=48 AND V<=57 THEN V=V-48 ELSE IF V>=65 AND V<=90 THEN V=V-55 ELSE V=0
+	'print v:input y$
+	TMP = TMP + V * 16^J
+	J=J+1
+NEXT I
+RETURN
+
+*START
+
+CLEAR:CLS
+
+PRINT "Please allocate 8K machine code space first!"
+PRINT ""
+
+'request address input
+INPUT "Set install address: ";ADDR$
+*ADDRLEN
+IF LEN(ADDR$)<6 THEN ADDR$="0"+ADDR$:GOTO*ADDRLEN
+TMP$=ADDR$: GOSUB *UPPERCASE: GOSUB *CONVHEX
+ADDR=TMP
+SADDR=ADDR
+'PRINT "Install to ";HEX$(ADDR);: INPUT"? [Y]";Y$
+'IF Y$<>"Y" THEN PRINT "Aborted.": END
+
+'request serial input
+PRINT "Waiting for transfer..."
+ADDR = TMP
+OPEN "9600,N,8,1,A,C,&1A,X,N" FOR INPUT AS #1
+LINUM=0
+*PROCDAT
+TMP$ = LEFT$(INPUT$(3, #1), 2)
+IF LEFT$(TMP$,1)="Q" THEN *ENDFILE
+GOSUB *CONVHEX
+POKE ADDR, TMP
+IF LINUM=0 THEN PRINT "&";HEX$(ADDR);": ";
+IF LINUM=15 THEN TMP2$=HEX$(TMP): IF TMP < 16 THEN PRINT "....&0";TMP2$; ELSE PRINT "....&";TMP2$;
+ADDR = ADDR + 1
+LINUM = LINUM + 1
+IF LINUM=16 THEN INPUT #1,TMP2$: PRINT " ": LINUM=0
+'IF EOF(1) THEN *ENDFILE
+GOTO *PROCDAT
+*ENDFILE
+
+'finish
+PRINT "Finished."
+PRINT "End address: &";HEX$(ADDR-1)
+PRINT "Size: &";HEX$(ADDR-SADDR)
+CLOSE
+BEEP 8
+END
+
